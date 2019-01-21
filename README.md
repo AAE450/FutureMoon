@@ -14,7 +14,7 @@ All other work-in-progress work is contained on the dev branch.
 2. Navigate to the directory on your computer to store a copy of the repo on
 
 3. Clone the repo:
-`git clone https://github.com/MinduliW/FutureMoon`
+`git clone https://github.com/AAE450/FutureMoon.git`
 
 4. Go into the local repo
 `cd FutureMoon`
@@ -53,7 +53,7 @@ NOTE: its important to use the correct branch name, so changes don't overwrite o
 
 
 8. Check online.
-You can always check your commit by going online to https://github.com/MinduliW/FutureMoon.
+You can always check your commit by going online to https://github.com/AAE450/FutureMoon.git.
   
 9. Updating the repo.
 When using multiple machines often the repo on one machine will have code in a different state than the other. 
