@@ -1,9 +1,4 @@
-# FutureMoon
-AAE 450 : Project Future Moon 
-
-
-AAE 450 : Project Future Moon 
-
+# AAE 450 : Project Future Moon 
 Matlab code for the mission design and feasiblity analysis. 
 
 ## Master branch
