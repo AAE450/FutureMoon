@@ -1,0 +1,25 @@
+function [] = computeLandingPropulsionRequirements()
+%COMPUTETHRUSTERREQUIREMENTS Will compute a trajectory through the
+%waypoints covered in my (Kevin Sheridan) 2nd presentation.
+
+% Inputs: - vehicleMass (kg)
+%         - vehicleRadius (m) (used for moment of inertia calculation)
+%         - vehicleHeight (m)
+
+mass = 5000;
+R = 4;
+H = 2;
+Fmax = 400;
+Fmin = 0;
+Isp = 300;
+
+entryAngle = -pi/2.5;
+entrySpeed = 1690;
+v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
+r0 = [-5000; 0; 5000];
+r1 = [0; 0; 100];
+v1 = [0; 0; -10];
+r1 = [0; 0; 100];
+v2 = [0; 0; -10];
+
+end

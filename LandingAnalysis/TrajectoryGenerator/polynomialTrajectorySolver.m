@@ -11,7 +11,7 @@ function [C] = polynomialTrajectorySolver(X, Y, Z, Mass, Moment, MaxVel, MinZFor
 ti = 0;
 %this is a ball park estimate of tf for starting
 %in the future it should take into account the distance
-tf = 10;
+tf = 60;
 
 %create variables for newton's method
 t_start = ti;

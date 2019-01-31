@@ -1,4 +1,4 @@
-function [Error] = calculateActuatorFeasibility(Coefficients, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle, tf)
+function [] = plotForceOverTime(Coefficients, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle, tf)
 %UNTITLED4 Summary of this function goes here
 %   This function will test a given set of polynomials to see if they fit
 %   within the actuator constraints specified
@@ -22,8 +22,10 @@ J = [Moment(1),         0,         0;
 
 % Find the maximum accelerations
 [maxima, foundRoots] = calculateMaximums(Coefficients, 2, tf);
-maxima
+maxima;
 MaxForce;
+
+
 
 %create the fTot
 [~, c] = size(foundRoots);
