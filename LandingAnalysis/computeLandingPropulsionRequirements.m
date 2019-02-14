@@ -1,52 +1,74 @@
 function [] = computeLandingPropulsionRequirements()
 %COMPUTETHRUSTERREQUIREMENTS Will compute a trajectory through the
-%waypoints covered in my (Kevin Sheridan) 2nd presentation.
+%waypoints covered in my (Kevin Sheridan) 3rd presentation.
 
 % Inputs: - vehicleMass (kg)
 %         - vehicleRadius (m) (used for moment of inertia calculation)
 %         - vehicleHeight (m)
 
-mass = 5000;
 R = 4;
 H = 2;
-Fmax = 71000;
-Fmin = 0;
-Isp = 300;
 
+mass = 5000;
 Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
 Iyy = Ixx;
 Izz = 1/2*mass*R^2;
 
-entryAngle = -pi/4;
-entrySpeed = 320;
+
+settings = Settings;
+settings.inertiaTensor = diag([Ixx, Iyy, Izz]);
+settings.maxForcePerMotor = 12000;
+settings.minForcePerMotor = 0;
+settings.initialMass = 5000;
+settings.Isp = 300;
+settings.g = 1.62;
+
+
+thrusterTheta = 5 * pi/180; % rad (the split between the thrusters)
+settings.thrusterCount = 8/2; % this is because of an equality constrain imposed.
+
+c = cos(thrusterTheta/2);
+s = sin(thrusterTheta/2);
+
+settings.thrusterMap = 2 * [1, 1, 1, 1;
+                        0, c, 0, -c;
+                        -c, 0, c, 0;
+                        -s, s, -s, s];
+
+
+
+entryAngle = 0;
+entrySpeed = 1690;
 v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
-r0 = [-5000; 0; 5000];
+r0 = [-600000; 0; 100000];
 r1 = [0; 0; 50];
 v1 = [0; 0; -5];
 
-correctionDelta = [20;0;0];
+correctionDelta = [10;-10;0];
 
-r2 = [0; 0; 25] + correctionDelta;
-v2 = [0; 0; -2.5];
+r2 = [0; 0; 1] + correctionDelta;
+v2 = [0; 0; -1];
 r3 = [0; 0; 0] + correctionDelta;
-v3 = [0;0;0];
+v3 = [0;0;-0.05];
 
 % generate the trajectory and plot.
 
 start = [r0, v0, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
 mid = [[r1;v1], [r2;v2]];
+%mid = [[r1;v1]];
 final = [r3, v3, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
 
+warning('off')
 
-[traj, flightTime] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', mass, [1.5, 1.5, 1], 1e6, -45, Fmax*2, pi/2, 10)
+[traj, flightTime] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', settings, 40);
 
 %plot the trajectory
 clf;
 [p1, p2] = trajectoryPlotter(traj);
-p2
+p2;
 daspect([1 1 1])
-xlim([-100, 30])
-ylim([0, 200])
+%xlim([-100, 30])
+%ylim([0, 200])
 %zlim([-10, 10])
 hold on
 %arrow3(p1, p2, 'b', 10)

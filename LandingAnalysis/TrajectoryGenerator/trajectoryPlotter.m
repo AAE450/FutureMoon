@@ -19,8 +19,6 @@ for z_index = (2:1:trajZ)
     dt_vec = [dt_vec, Traj(1, 11, z_index)];
 end
 
-dt_vec
-
 p2 = p1 + (pAccel * 0.4);
 
 end
