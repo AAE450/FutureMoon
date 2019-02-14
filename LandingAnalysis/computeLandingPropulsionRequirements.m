@@ -44,7 +44,7 @@ r0 = [-600000; 0; 100000];
 r1 = [0; 0; 50];
 v1 = [0; 0; -5];
 
-correctionDelta = [10;-10;0];
+correctionDelta = [-10;0;0];
 
 r2 = [0; 0; 1] + correctionDelta;
 v2 = [0; 0; -1];
@@ -60,24 +60,11 @@ final = [r3, v3, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
 
 warning('off')
 
-[traj, flightTime] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', settings, 40);
+[traj, flightTime, segmentLogs] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', settings, 40);
 
-%plot the trajectory
-clf;
-[p1, p2] = trajectoryPlotter(traj);
-p2;
-daspect([1 1 1])
-%xlim([-100, 30])
-%ylim([0, 200])
-%zlim([-10, 10])
-hold on
-%arrow3(p1, p2, 'b', 10)
-plot(p1(:, 1), p1(:, 3))
-title('Landing Trajectory')
-xlabel('x (m)')
-ylabel('z (m)')
-grid on;
-%savefig('initial_trajectory');
-hold off
+fprintf('\nTotal Flight Time: %f s \nFinal Mass: %f kg\n', flightTime, segmentLogs{end}.mass(end));
+
+% plot the trajectory
+generatePlots(segmentLogs);
 
 end

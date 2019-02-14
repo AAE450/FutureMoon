@@ -60,7 +60,7 @@ C(2, 1:10) = A\Y';
 C(3, 1:10) = A\Z';
 C(:, 11) = [tf, tf, tf]';
 
-[infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(C(1:3, 1:10), settings, tf)
+[infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(C(1:3, 1:10), settings, tf);
 
 
 

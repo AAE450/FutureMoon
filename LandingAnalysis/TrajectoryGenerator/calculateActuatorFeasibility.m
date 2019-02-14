@@ -18,9 +18,9 @@ dt = times(2) - times(1);
 
 % compute the all derivatives of the trajectory and sample them;
 
-pos = [(polyval(polyder(Coefficients(1, :)), times)); 
-       (polyval(polyder(Coefficients(2, :)), times));
-       (polyval(polyder(Coefficients(3, :)), times))];
+pos = [(polyval((Coefficients(1, :)), times)); 
+       (polyval((Coefficients(2, :)), times));
+       (polyval((Coefficients(3, :)), times))];
 
 vel = [(polyval(polyder(Coefficients(1, :)), times)); 
        (polyval(polyder(Coefficients(2, :)), times));
@@ -67,7 +67,7 @@ Mb = zeros(3, 1);
 m = settings.initialMass;
 for idx = (1:1:length(times))
     
-    Fi = m * (jerk(1:3, idx) + settings.g);
+    Fi = m * (accel(1:3, idx) + settings.g*[0;0;1]);
     Fi_prime = m * jerk(1:3, idx);
     Fi_prime_prime = m * snap(1:3, idx);
     
@@ -129,8 +129,9 @@ for idx = (1:1:length(times))
         
         % compute quaternion;
         q = 1/sqrt(2 * (1 + Fi_bar' * [0;0;1])) * [Fi_bar' * [0;0;1]; cross(Fi_bar, [0;0;1])];
+        q = q / norm(q);
         
-        trajectorySegmentLog.quaternion = q;
+        trajectorySegmentLog.quaternion(1:4, end+1) = q;
     end
     
 end
