@@ -1,4 +1,4 @@
-function [C, trajectorySegmentLog] = polynomialTrajectorySolver(X, Y, Z, settings, ITERATIONS)
+function [C, finalMass, trajectorySegmentLog] = polynomialTrajectorySolver(X, Y, Z, settings, ITERATIONS)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 %   This will solve for the coefficients of a constrained 9 order
@@ -21,6 +21,11 @@ infeasible = 0;
 
 neverFeasible = true;
 
+bestT = t_end;
+
+fm = [];
+t
+
 for it = (1:1:ITERATIONS)
     A = get9DegPolyMatrix(ti, t_mid);
     
@@ -34,22 +39,20 @@ for it = (1:1:ITERATIONS)
     %feasibility function
     [infeasible, finalMass] = calculateActuatorFeasibility(C, settings, t_mid);
     
+    
     % reasses the bounding points of the newton's method variables
     if infeasible == 1
         t_start = t_mid;
         t_mid = (t_mid + t_end) / 2;
     else
+        bestT = t_mid;
         neverFeasible = false;
         t_end = t_mid;
         t_mid = (t_mid + t_start) / 2;
     end
 end
 %set the tf to the answer
-if infeasible == 1
-    tf = t_end;
-else
-    tf = t_mid;
-end
+tf = bestT;
 
 %recalculate the Coefficient matrix one last time
 A = get9DegPolyMatrix(ti, tf);
@@ -60,7 +63,8 @@ C(2, 1:10) = A\Y';
 C(3, 1:10) = A\Z';
 C(:, 11) = [tf, tf, tf]';
 
-[infeasible, finalMass] = calculateActuatorFeasibility(C, settings, t_mid)
+[infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(C(1:3, 1:10), settings, tf);
+
 
 
 if neverFeasible

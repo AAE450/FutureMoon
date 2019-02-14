@@ -40,7 +40,7 @@ settings.thrusterMap = 2 * [1, 1, 1, 1;
 entryAngle = 0;
 entrySpeed = 1690;
 v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
-r0 = [-550000; 0; 100000];
+r0 = [-700000; 0; 100000];
 r1 = [-10; 0; 30];
 v1 = [0; 0; -5];
 

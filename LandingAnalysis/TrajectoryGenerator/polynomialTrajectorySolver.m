@@ -23,6 +23,9 @@ neverFeasible = true;
 
 bestT = t_end;
 
+fm = [];
+times = [];
+
 for it = (1:1:ITERATIONS)
     A = get9DegPolyMatrix(ti, t_mid);
     
@@ -34,8 +37,12 @@ for it = (1:1:ITERATIONS)
     
     %now that we have the Coefficient matrix run the calculate Actuator
     %feasibility function
-    [infeasible] = calculateActuatorFeasibility(C, settings, t_mid);
+    [infeasible, finalMass] = calculateActuatorFeasibility(C, settings, t_mid);
     
+    if ~infeasible
+        fm = [fm, finalMass];
+        times = [times, t_mid];
+    end
     
     % reasses the bounding points of the newton's method variables
     if infeasible == 1
@@ -62,7 +69,12 @@ C(:, 11) = [tf, tf, tf]';
 
 [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(C(1:3, 1:10), settings, tf);
 
-
+% scatter(times, settings.initialMass - fm);
+% title('Propellant consumed as time decreases');
+% xlabel('Trajectory Segment Time (s)')
+% ylabel('Propellant Consumed (kg)')
+% drawnow
+% pause(5);
 
 if neverFeasible
     error('TRAJECTORY SEGMENT NOT FEASIBLE!');

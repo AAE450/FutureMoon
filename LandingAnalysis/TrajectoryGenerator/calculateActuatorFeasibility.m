@@ -5,8 +5,8 @@ function [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasib
 trajectorySegmentLog = TrajectorySegmentLog();
 finalMass = 0;
 % Compute the time vector.
-maxDt = 0.2;
-minResolution = 50;
+maxDt = 1;
+minResolution = 100;
 times = (0:maxDt:tf);
 
  if length(times) < minResolution
