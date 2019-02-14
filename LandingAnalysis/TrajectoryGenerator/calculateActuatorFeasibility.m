@@ -5,13 +5,13 @@ function [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasib
 trajectorySegmentLog = TrajectorySegmentLog();
 finalMass = 0;
 % Compute the time vector.
-maxDt = 1;
-minResolution = 100;
+maxDt = 0.2;
+minResolution = 50;
 times = (0:maxDt:tf);
 
-if length(times) < minResolution
-    times = linspace(0, tf, minResolution);
-end
+ if length(times) < minResolution
+     times = linspace(0, tf, minResolution);
+ end
 
 dt = times(2) - times(1);
 
@@ -128,8 +128,9 @@ for idx = (1:1:length(times))
         trajectorySegmentLog.tf = tf;
         
         % compute quaternion;
-        q = 1/sqrt(2 * (1 + Fi_bar' * [0;0;1])) * [Fi_bar' * [0;0;1]; cross(Fi_bar, [0;0;1])];
-        q = q / norm(q);
+        theta = acos(Fi_bar' * [0;0;1]);
+        q = [cos(theta/2); sin(theta/2) * -cross(Fi_bar, [0;0;1])];
+        %q = q / norm(q);
         
         trajectorySegmentLog.quaternion(1:4, end+1) = q;
     end

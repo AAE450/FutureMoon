@@ -6,7 +6,7 @@ function [] = computeLandingPropulsionRequirements()
 %         - vehicleRadius (m) (used for moment of inertia calculation)
 %         - vehicleHeight (m)
 
-R = 4;
+R = 2;
 H = 2;
 
 mass = 5000;
@@ -40,11 +40,11 @@ settings.thrusterMap = 2 * [1, 1, 1, 1;
 entryAngle = 0;
 entrySpeed = 1690;
 v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
-r0 = [-600000; 0; 100000];
-r1 = [0; 0; 50];
+r0 = [-550000; 0; 100000];
+r1 = [-10; 0; 30];
 v1 = [0; 0; -5];
 
-correctionDelta = [-10;0;0];
+correctionDelta = [-20;-10;0];
 
 r2 = [0; 0; 1] + correctionDelta;
 v2 = [0; 0; -1];
