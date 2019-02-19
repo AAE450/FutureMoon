@@ -1,15 +1,16 @@
-function [] = computeLandingPropulsionRequirements()
+function [] = computeLandingPropulsionRequirements(payloadMass, propellantMass, pInitial, vInitial)
 %COMPUTETHRUSTERREQUIREMENTS Will compute a trajectory through the
 %waypoints covered in my (Kevin Sheridan) 3rd presentation.
 
-% Inputs: - vehicleMass (kg)
-%         - vehicleRadius (m) (used for moment of inertia calculation)
-%         - vehicleHeight (m)
+% Inputs: payloadMass: (kg) mass not including the propellant.
+%         propellantMass: (kg) mass of propellant.
+%         pInitial: (m) the position of the craft wrt to the landing site at deorbit.
+%         vInitial: ()
 
 R = 2;
 H = 2;
 
-mass = 5000;
+mass = 10000;
 Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
 Iyy = Ixx;
 Izz = 1/2*mass*R^2;
@@ -19,9 +20,10 @@ settings = Settings;
 settings.inertiaTensor = diag([Ixx, Iyy, Izz]);
 settings.maxForcePerMotor = 12000;
 settings.minForcePerMotor = 0;
-settings.initialMass = 5000;
+settings.initialMass = 10000;
 settings.Isp = 300;
 settings.g = 1.62;
+settings.thrusterLeverArm = R;
 
 
 thrusterTheta = 5 * pi/180; % rad (the split between the thrusters)
@@ -40,11 +42,11 @@ settings.thrusterMap = 2 * [1, 1, 1, 1;
 entryAngle = 0;
 entrySpeed = 1690;
 v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
-r0 = [-550000; 0; 100000];
+r0 = [-700000; 0; 100000];
 r1 = [-10; 0; 30];
 v1 = [0; 0; -5];
 
-correctionDelta = [-20;0;0];
+correctionDelta = [-20;-10;0];
 
 r2 = [0; 0; 1] + correctionDelta;
 v2 = [0; 0; -1];

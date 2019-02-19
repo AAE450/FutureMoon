@@ -1,0 +1,342 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>computeLandingPropulsionRequirements</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-14"><meta name="DC.source" content="computeLandingPropulsionRequirements.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [] = computeLandingPropulsionRequirements()
+<span class="comment">%COMPUTETHRUSTERREQUIREMENTS Will compute a trajectory through the</span>
+<span class="comment">%waypoints covered in my (Kevin Sheridan) 3rd presentation.</span>
+
+<span class="comment">% Inputs: - vehicleMass (kg)</span>
+<span class="comment">%         - vehicleRadius (m) (used for moment of inertia calculation)</span>
+<span class="comment">%         - vehicleHeight (m)</span>
+
+R = 2;
+H = 2;
+
+mass = 5000;
+Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
+Iyy = Ixx;
+Izz = 1/2*mass*R^2;
+
+
+settings = Settings;
+settings.inertiaTensor = diag([Ixx, Iyy, Izz]);
+settings.maxForcePerMotor = 12000;
+settings.minForcePerMotor = 0;
+settings.initialMass = 5000;
+settings.Isp = 300;
+settings.g = 1.62;
+
+
+thrusterTheta = 5 * pi/180; <span class="comment">% rad (the split between the thrusters)</span>
+settings.thrusterCount = 8/2; <span class="comment">% this is because of an equality constrain imposed.</span>
+
+c = cos(thrusterTheta/2);
+s = sin(thrusterTheta/2);
+
+settings.thrusterMap = 2 * [1, 1, 1, 1;
+                        0, c, 0, -c;
+                        -c, 0, c, 0;
+                        -s, s, -s, s];
+
+
+
+entryAngle = 0;
+entrySpeed = 1690;
+v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
+r0 = [-700000; 0; 100000];
+r1 = [-10; 0; 30];
+v1 = [0; 0; -5];
+
+correctionDelta = [-20;-10;0];
+
+r2 = [0; 0; 1] + correctionDelta;
+v2 = [0; 0; -1];
+r3 = [0; 0; 0] + correctionDelta;
+v3 = [0;0;-0.05];
+
+<span class="comment">% generate the trajectory and plot.</span>
+
+start = [r0, v0, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
+mid = [[r1;v1], [r2;v2]];
+<span class="comment">%mid = [[r1;v1]];</span>
+final = [r3, v3, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
+
+warning(<span class="string">'off'</span>)
+
+[traj, flightTime, segmentLogs] = minimumTimeTrajectoryGenerator(start, mid, final, <span class="string">'VEL'</span>, settings, 40);
+
+fprintf(<span class="string">'\nTotal Flight Time: %f s \nFinal Mass: %f kg\n'</span>, flightTime, segmentLogs{end}.mass(end));
+
+<span class="comment">% plot the trajectory</span>
+generatePlots(segmentLogs);
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 755.401281
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 9.939207
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 1.171687
+
+Total Flight Time: 766.512175 s 
+Final Mass: 2258.777713 kg
+</pre><img vspace="5" hspace="5" src="computeLandingPropulsionRequirements_01.png" alt=""> <img vspace="5" hspace="5" src="computeLandingPropulsionRequirements_02.png" alt=""> <img vspace="5" hspace="5" src="computeLandingPropulsionRequirements_03.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [] = computeLandingPropulsionRequirements()
+%COMPUTETHRUSTERREQUIREMENTS Will compute a trajectory through the
+%waypoints covered in my (Kevin Sheridan) 3rd presentation.
+
+% Inputs: - vehicleMass (kg)
+%         - vehicleRadius (m) (used for moment of inertia calculation)
+%         - vehicleHeight (m)
+
+R = 2;
+H = 2;
+
+mass = 5000;
+Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
+Iyy = Ixx;
+Izz = 1/2*mass*R^2;
+
+
+settings = Settings;
+settings.inertiaTensor = diag([Ixx, Iyy, Izz]);
+settings.maxForcePerMotor = 12000;
+settings.minForcePerMotor = 0;
+settings.initialMass = 5000;
+settings.Isp = 300;
+settings.g = 1.62;
+
+
+thrusterTheta = 5 * pi/180; % rad (the split between the thrusters)
+settings.thrusterCount = 8/2; % this is because of an equality constrain imposed.
+
+c = cos(thrusterTheta/2);
+s = sin(thrusterTheta/2);
+
+settings.thrusterMap = 2 * [1, 1, 1, 1;
+                        0, c, 0, -c;
+                        -c, 0, c, 0;
+                        -s, s, -s, s];
+
+
+
+entryAngle = 0;
+entrySpeed = 1690;
+v0 = [cos(entryAngle) * entrySpeed; 0; sin(entryAngle)*entrySpeed];
+r0 = [-700000; 0; 100000];
+r1 = [-10; 0; 30];
+v1 = [0; 0; -5];
+
+correctionDelta = [-20;-10;0];
+
+r2 = [0; 0; 1] + correctionDelta;
+v2 = [0; 0; -1];
+r3 = [0; 0; 0] + correctionDelta;
+v3 = [0;0;-0.05];
+
+% generate the trajectory and plot.
+
+start = [r0, v0, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
+mid = [[r1;v1], [r2;v2]];
+%mid = [[r1;v1]];
+final = [r3, v3, zeros(3, 1), zeros(3, 1), zeros(3, 1)];
+
+warning('off')
+
+[traj, flightTime, segmentLogs] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', settings, 40);
+
+fprintf('\nTotal Flight Time: %f s \nFinal Mass: %f kg\n', flightTime, segmentLogs{end}.mass(end));
+
+% plot the trajectory
+generatePlots(segmentLogs);
+
+end
+
+##### SOURCE END #####
+--></body></html>

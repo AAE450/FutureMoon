@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>calculateActuatorFeasibility</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-01-30"><meta name="DC.source" content="calculateActuatorFeasibility.m"><style type="text/css">
+      --><title>calculateActuatorFeasibility</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-14"><meta name="DC.source" content="calculateActuatorFeasibility.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,278 +66,300 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [Error] = calculateActuatorFeasibility(Coefficients, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle, tf)
-<span class="comment">%UNTITLED4 Summary of this function goes here</span>
-<span class="comment">%   This function will test a given set of polynomials to see if they fit</span>
-<span class="comment">%   within the actuator constraints specified</span>
-<span class="comment">%   ESSENTIALLY</span>
-<span class="comment">%   Coefficients: a 3X10 Matrix of coefficients</span>
-<span class="comment">%   Mass</span>
-<span class="comment">%   Moment - moment vector</span>
-<span class="comment">%   tf: the final time</span>
-<span class="comment">%MinZForce = the minumum force in the z direction typlically gravity (-45)</span>
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(Coefficients, settings, tf)
+<span class="comment">% computes the forces on each motor over time and computes propellant</span>
+<span class="comment">% consumption.</span>
 
-<span class="comment">%the distance of each motor from the center of mass</span>
-d = 2;
-<span class="comment">%coefficient of drag related to yaw drag</span>
-c = 0;
-<span class="comment">%gravity</span>
-g = 1.62;
-<span class="comment">%create the moment matrix</span>
-J = [Moment(1),         0,         0;
-            0,          Moment(2), 0;
-            0,          0,         Moment(3)];
+trajectorySegmentLog = TrajectorySegmentLog();
+finalMass = 0;
+<span class="comment">% Compute the time vector.</span>
+maxDt = 1;
+minResolution = 100;
+times = (0:maxDt:tf);
 
-<span class="comment">% Find the maximum accelerations</span>
-[maxima, foundRoots] = calculateMaximums(Coefficients, 2, tf);
-maxima
-MaxForce;
+ <span class="keyword">if</span> length(times) &lt; minResolution
+     times = linspace(0, tf, minResolution);
+ <span class="keyword">end</span>
 
-<span class="comment">%create the fTot</span>
-[~, c] = size(foundRoots);
-f_total = zeros(3, c);
-<span class="comment">%now test whether these maximums are within feasible limits</span>
-<span class="keyword">for</span> it = (1:length(foundRoots))
-    <span class="comment">%calculate the magnitude of the acceleration gravity while taking into</span>
-    <span class="comment">%account mass and gravity</span>
-    <span class="comment">%mag is the [0, 0, 0, F_Total]' vector of the quadrotor. It must not</span>
-    <span class="comment">%exceed the maximum possible acceleration</span>
-    f_total(1:3, it) = Mass * (maxima(:, it) + [0; 0; g]);
-    <span class="keyword">if</span> norm(f_total(:, it)) &gt; MaxForce || f_total(3, it) &lt;= MinZForce
-        fprintf(<span class="string">'FORCE TOO HIGH\n'</span>);
-        Error = 1;
+dt = times(2) - times(1);
+
+
+<span class="comment">% compute the all derivatives of the trajectory and sample them;</span>
+
+pos = [(polyval((Coefficients(1, :)), times));
+       (polyval((Coefficients(2, :)), times));
+       (polyval((Coefficients(3, :)), times))];
+
+vel = [(polyval(polyder(Coefficients(1, :)), times));
+       (polyval(polyder(Coefficients(2, :)), times));
+       (polyval(polyder(Coefficients(3, :)), times))];
+
+accel = [(polyval(polyder(polyder(Coefficients(1, :))), times));
+       (polyval(polyder(polyder(Coefficients(2, :))), times));
+       (polyval(polyder(polyder(Coefficients(3, :))), times))];
+
+jerk = [(polyval(polyder(polyder(polyder(Coefficients(1, :)))), times));
+       (polyval(polyder(polyder(polyder(Coefficients(2, :)))), times));
+       (polyval(polyder(polyder(polyder(Coefficients(3, :)))), times))];
+
+snap = [(polyval(polyder(polyder(polyder(polyder(Coefficients(1, :))))), times));
+       (polyval(polyder(polyder(polyder(polyder(Coefficients(2, :))))), times));
+       (polyval(polyder(polyder(polyder(polyder(Coefficients(3, :))))), times))];
+
+<span class="comment">% check for inverted flight</span>
+<span class="keyword">for</span> idx = (1:1:length(times))
+    acc = accel(1:3, idx);
+
+    <span class="keyword">if</span> (acc(3) + settings.g) &lt; 0
+        fprintf(<span class="string">'INVERTED FLIGHT NOT ALLOWED.\n'</span>);
+        infeasible = true;
         <span class="keyword">return</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 
-<span class="comment">%now use a lot of physics and math to calculate the force each motor must</span>
-<span class="comment">%be exerting at each point</span>
-
-<span class="comment">%start by declaring the variables</span>
-<span class="comment">%inertial frame force vector</span>
-Fi = zeros(3, length(foundRoots));
-Fi(1, :) = Mass * (polyval(polyder(polyder(Coefficients(1, :))), foundRoots));
-Fi(2, :) = Mass * (polyval(polyder(polyder(Coefficients(2, :))), foundRoots));
-<span class="comment">% add g to the</span>
-Fi(3, :) = Mass * (polyval(polyder(polyder(Coefficients(3, :))), foundRoots) + (g * ones(1, length(foundRoots))));
-
-<span class="comment">% create the first derivative of force vector</span>
-Fi_prime = zeros(3, length(foundRoots));
-Fi_prime(1, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(1, :)))), foundRoots));
-Fi_prime(2, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(2, :)))), foundRoots));
-Fi_prime(3, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(3, :)))), foundRoots));
-
-<span class="comment">% create the first derivative of force vector</span>
-Fi_prime_prime = zeros(3, length(foundRoots));
-Fi_prime_prime(1, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(1, :))))), foundRoots));
-Fi_prime_prime(2, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(2, :))))), foundRoots));
-Fi_prime_prime(3, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(3, :))))), foundRoots));
 
 <span class="comment">%calculate the desired omega vector</span>
-Omega_desired = zeros(3, length(foundRoots));
+Omega_desired = zeros(3, 1);
 <span class="comment">%Aplha desired calculation</span>
-Alpha_desired = zeros(3, length(foundRoots));
+Alpha_desired = zeros(3, 1);
 <span class="comment">%Fi_bar_prime calc</span>
-Fi_bar_prime = zeros(3, length(foundRoots));
+Fi_bar_prime = zeros(3, 1);
 <span class="comment">%Fi_bar_prime_prime calc</span>
-Fi_bar_prime_prime = zeros(3, length(foundRoots));
+Fi_bar_prime_prime = zeros(3, 1);
 <span class="comment">%create the bar vector of Fi</span>
-Fi_bar = zeros(3, length(foundRoots));
+Fi_bar = zeros(3, 1);
 <span class="comment">%moments</span>
-Mb = zeros(3, length(foundRoots));
+Mb = zeros(3, 1);
 
-<span class="comment">%caclculate the bar and prime and alpha</span>
-<span class="keyword">for</span> it = (1:1:length(foundRoots))
-    mag = norm(Fi(:, it));
-    Fi_bar(:, it) = Fi(:, it) / mag;
+<span class="comment">% check individual motor forces.</span>
+m = settings.initialMass;
+<span class="keyword">for</span> idx = (1:1:length(times))
+
+    Fi = m * (accel(1:3, idx) + settings.g*[0;0;1]);
+    Fi_prime = m * jerk(1:3, idx);
+    Fi_prime_prime = m * snap(1:3, idx);
+
+    mag = norm(Fi);
+    <span class="comment">%TODO is Fi too small?</span>
+
+    Fi_bar = Fi / mag;
 
     <span class="comment">%Calculation of fi_bar_prime</span>
-    Fi_bar_prime(:, it) = (Fi_prime(:, it) / norm(Fi(:, it))) - ((Fi(:, it) * (Fi(:, it)' * Fi_prime(:, it))) / (norm(Fi(:, it))^3));
+    Fi_bar_prime = (Fi_prime / norm(Fi)) - ((Fi * (Fi' * Fi_prime)) / (norm(Fi)^3));
 
     <span class="comment">% calcing fi_bar_prime_prime</span>
-    Fi_bar_prime_prime(:, it) = (Fi_prime_prime(:, it) / norm(Fi(:, it))) - ((2 * Fi_prime(:, it) * (Fi(:, it)' * Fi_prime(:, it)) + Fi(:, it) * (Fi_prime(:, it)' * Fi_prime(:, it)) + Fi(:, it) * (Fi(:, it)' * Fi_prime_prime(:, it))) / norm(Fi(:, it))^3) + ((3 * Fi(:, it) * (Fi(:, it)' * Fi_prime(:, it))) / norm(Fi(:, it))^5);
+    Fi_bar_prime_prime = (Fi_prime_prime / norm(Fi)) - ((2 * Fi_prime * (Fi' * Fi_prime) + Fi * (Fi_prime' * Fi_prime) + Fi * (Fi' * Fi_prime_prime)) / norm(Fi)^3) + ((3 * Fi * (Fi' * Fi_prime)) / norm(Fi)^5);
 
     <span class="comment">%the omega desired calc</span>
-    Omega_desired(:, it) = cross(Fi_bar(:, it), Fi_bar_prime(:, it));
+    Omega_desired = cross(Fi_bar, Fi_bar_prime);
     <span class="comment">%set the z moment to zero</span>
-    Omega_desired(3, it) = 0;
+    Omega_desired(3) = 0;
 
     <span class="comment">%the alpha vector</span>
-    Alpha_desired(:, it) = cross(Fi_bar(:, it), (Fi_bar_prime_prime(:, it) - cross(Omega_desired(:, it), (cross(Omega_desired(:, it), Fi_bar_prime(:, it))))));
+    Alpha_desired = cross(Fi_bar, (Fi_bar_prime_prime - cross(Omega_desired, (cross(Omega_desired, Fi_bar_prime)))));
     <span class="comment">%set the z to zero</span>
-    Alpha_desired(3, it) = 0;
+    Alpha_desired(3) = 0;
 
     <span class="comment">%FINALLY! now that we have the desired omega and the simulated current</span>
     <span class="comment">%omega, we can calcuate the exact forces that each motor must produce at a</span>
     <span class="comment">%given time(the maximum accelerations along a polynomial)</span>
-    Mb(:, it) = J * Alpha_desired(:, it) + cross(Omega_desired(:, it), J * Omega_desired(:, it));
-<span class="keyword">end</span>
+    Mb = settings.inertiaTensor * Alpha_desired + cross(Omega_desired, settings.inertiaTensor * Omega_desired);
 
-motorForces = zeros(4, length(Mb));
+    motorForces = settings.thrusterMap \ [norm(Fi); Mb];
 
-torqueMat = [ 1,  1,  1,  1; <span class="comment">% matrix that will calculate the</span>
-                0, d, 0,  -d; <span class="comment">% moment and motor forces necessary</span>
-                -d,  0, d, 0;
-                -c,  c, -c,  c];
-
-<span class="keyword">for</span> it = (1:1:length(foundRoots))
-    motorForces(:, it) = torqueMat \ [norm(f_total(:, it)); Mb(1, it); Mb(2, it); Mb(3, it)];
-
-    <span class="comment">% while in the for loop check to see if the forces are within the</span>
-    <span class="comment">% bounds</span>
-
-    <span class="keyword">if</span> any(motorForces(:, it) &lt;= 1) || any(motorForces(:, it) &gt;= MaxForce / 4)
-        fprintf(<span class="string">'INDIVIDUAL MOTOR FORCE TOO HIGH\n'</span>);
-        Error = 1;
+    <span class="keyword">if</span> any(motorForces &gt; settings.maxForcePerMotor)
+        fprintf(<span class="string">'THRUSTER FORCE TOO HIGH\n'</span>)
+        infeasible = true;
         <span class="keyword">return</span>;
     <span class="keyword">end</span>
+    <span class="keyword">if</span> any(motorForces &lt; settings.minForcePerMotor)
+        fprintf(<span class="string">'THRUSTER FORCE TOO LOW\n'</span>)
+        infeasible = true;
+        <span class="keyword">return</span>;
+    <span class="keyword">end</span>
+
+    <span class="comment">% compute next mass</span>
+    m = m - (norm(Fi) / (settings.Isp * 9.8)) * dt;
+
+    <span class="keyword">if</span> m &lt;= 0
+        fprintf(<span class="string">'VEHICLE MASS IS NEGATIVE!\n'</span>)
+        infeasible = true;
+        <span class="keyword">return</span>;
+    <span class="keyword">end</span>
+
+    <span class="comment">% should the trajectory be logged.</span>
+    <span class="keyword">if</span> nargout == 3
+        trajectorySegmentLog.time(end+1) = times(idx);
+        trajectorySegmentLog.mass(end+1) = m;
+        trajectorySegmentLog.pos(1:3, end+1) = pos(1:3, idx);
+        trajectorySegmentLog.thrust(1:4, end+1) = motorForces;
+        trajectorySegmentLog.tf = tf;
+
+        <span class="comment">% compute quaternion;</span>
+        theta = acos(Fi_bar' * [0;0;1]);
+        q = [cos(theta/2); sin(theta/2) * -cross(Fi_bar, [0;0;1])];
+        <span class="comment">%q = q / norm(q);</span>
+
+        trajectorySegmentLog.quaternion(1:4, end+1) = q;
+    <span class="keyword">end</span>
+
 <span class="keyword">end</span>
 
-<span class="comment">%IF YOU HAVE NOT RETURNED BY THIS POINT THE TRAJECTORY IS WITHIN FEASIBLE</span>
-<span class="comment">%LIMITS</span>
-fprintf(<span class="string">'FEASIBILE\n'</span>);
-Error = -1;
-<span class="keyword">return</span>;
+finalMass = m;
+
+infeasible = false;
+fprintf(<span class="string">'FEASIBLE\n'</span>)
 
 <span class="keyword">end</span>
 </pre><pre class="codeoutput error">Not enough input arguments.
 
-Error in calculateActuatorFeasibility (line 19)
-J = [Moment(1),         0,         0;
+Error in calculateActuatorFeasibility (line 10)
+times = (0:maxDt:tf);
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-function [Error] = calculateActuatorFeasibility(Coefficients, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle, tf)
-%UNTITLED4 Summary of this function goes here
-%   This function will test a given set of polynomials to see if they fit
-%   within the actuator constraints specified
-%   ESSENTIALLY
-%   Coefficients: a 3X10 Matrix of coefficients
-%   Mass
-%   Moment - moment vector
-%   tf: the final time
-%MinZForce = the minumum force in the z direction typlically gravity (-45)
+function [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(Coefficients, settings, tf)
+% computes the forces on each motor over time and computes propellant
+% consumption.
 
-%the distance of each motor from the center of mass
-d = 2;
-%coefficient of drag related to yaw drag
-c = 0;
-%gravity
-g = 1.62;
-%create the moment matrix
-J = [Moment(1),         0,         0;
-            0,          Moment(2), 0;
-            0,          0,         Moment(3)];
+trajectorySegmentLog = TrajectorySegmentLog();
+finalMass = 0;
+% Compute the time vector.
+maxDt = 1;
+minResolution = 100;
+times = (0:maxDt:tf);
 
-% Find the maximum accelerations
-[maxima, foundRoots] = calculateMaximums(Coefficients, 2, tf);
-maxima
-MaxForce;
+ if length(times) < minResolution
+     times = linspace(0, tf, minResolution);
+ end
 
-%create the fTot
-[~, c] = size(foundRoots);
-f_total = zeros(3, c);
-%now test whether these maximums are within feasible limits
-for it = (1:length(foundRoots))
-    %calculate the magnitude of the acceleration gravity while taking into
-    %account mass and gravity
-    %mag is the [0, 0, 0, F_Total]' vector of the quadrotor. It must not
-    %exceed the maximum possible acceleration
-    f_total(1:3, it) = Mass * (maxima(:, it) + [0; 0; g]);
-    if norm(f_total(:, it)) > MaxForce || f_total(3, it) <= MinZForce
-        fprintf('FORCE TOO HIGH\n');
-        Error = 1;
+dt = times(2) - times(1);
+
+
+% compute the all derivatives of the trajectory and sample them;
+
+pos = [(polyval((Coefficients(1, :)), times)); 
+       (polyval((Coefficients(2, :)), times));
+       (polyval((Coefficients(3, :)), times))];
+
+vel = [(polyval(polyder(Coefficients(1, :)), times)); 
+       (polyval(polyder(Coefficients(2, :)), times));
+       (polyval(polyder(Coefficients(3, :)), times))];
+   
+accel = [(polyval(polyder(polyder(Coefficients(1, :))), times)); 
+       (polyval(polyder(polyder(Coefficients(2, :))), times));
+       (polyval(polyder(polyder(Coefficients(3, :))), times))];
+   
+jerk = [(polyval(polyder(polyder(polyder(Coefficients(1, :)))), times)); 
+       (polyval(polyder(polyder(polyder(Coefficients(2, :)))), times));
+       (polyval(polyder(polyder(polyder(Coefficients(3, :)))), times))];
+   
+snap = [(polyval(polyder(polyder(polyder(polyder(Coefficients(1, :))))), times)); 
+       (polyval(polyder(polyder(polyder(polyder(Coefficients(2, :))))), times));
+       (polyval(polyder(polyder(polyder(polyder(Coefficients(3, :))))), times))];
+
+% check for inverted flight
+for idx = (1:1:length(times))
+    acc = accel(1:3, idx);
+    
+    if (acc(3) + settings.g) < 0
+        fprintf('INVERTED FLIGHT NOT ALLOWED.\n');
+        infeasible = true;
         return
     end
 end
 
-%now use a lot of physics and math to calculate the force each motor must
-%be exerting at each point
-
-%start by declaring the variables
-%inertial frame force vector
-Fi = zeros(3, length(foundRoots));
-Fi(1, :) = Mass * (polyval(polyder(polyder(Coefficients(1, :))), foundRoots));
-Fi(2, :) = Mass * (polyval(polyder(polyder(Coefficients(2, :))), foundRoots));
-% add g to the 
-Fi(3, :) = Mass * (polyval(polyder(polyder(Coefficients(3, :))), foundRoots) + (g * ones(1, length(foundRoots))));
-
-% create the first derivative of force vector
-Fi_prime = zeros(3, length(foundRoots));
-Fi_prime(1, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(1, :)))), foundRoots));
-Fi_prime(2, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(2, :)))), foundRoots));
-Fi_prime(3, :) = Mass * (polyval(polyder(polyder(polyder(Coefficients(3, :)))), foundRoots));
-
-% create the first derivative of force vector
-Fi_prime_prime = zeros(3, length(foundRoots));
-Fi_prime_prime(1, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(1, :))))), foundRoots));
-Fi_prime_prime(2, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(2, :))))), foundRoots));
-Fi_prime_prime(3, :) = Mass * (polyval(polyder(polyder(polyder(polyder(Coefficients(3, :))))), foundRoots));
 
 %calculate the desired omega vector
-Omega_desired = zeros(3, length(foundRoots));
+Omega_desired = zeros(3, 1);
 %Aplha desired calculation
-Alpha_desired = zeros(3, length(foundRoots));
+Alpha_desired = zeros(3, 1);
 %Fi_bar_prime calc
-Fi_bar_prime = zeros(3, length(foundRoots));
+Fi_bar_prime = zeros(3, 1);
 %Fi_bar_prime_prime calc
-Fi_bar_prime_prime = zeros(3, length(foundRoots));
+Fi_bar_prime_prime = zeros(3, 1);
 %create the bar vector of Fi
-Fi_bar = zeros(3, length(foundRoots));
+Fi_bar = zeros(3, 1);
 %moments
-Mb = zeros(3, length(foundRoots));
+Mb = zeros(3, 1);
 
-%caclculate the bar and prime and alpha
-for it = (1:1:length(foundRoots))
-    mag = norm(Fi(:, it));
-    Fi_bar(:, it) = Fi(:, it) / mag;
+% check individual motor forces.
+m = settings.initialMass;
+for idx = (1:1:length(times))
+    
+    Fi = m * (accel(1:3, idx) + settings.g*[0;0;1]);
+    Fi_prime = m * jerk(1:3, idx);
+    Fi_prime_prime = m * snap(1:3, idx);
+    
+    mag = norm(Fi);
+    %TODO is Fi too small?
+    
+    Fi_bar = Fi / mag;
     
     %Calculation of fi_bar_prime
-    Fi_bar_prime(:, it) = (Fi_prime(:, it) / norm(Fi(:, it))) - ((Fi(:, it) * (Fi(:, it)' * Fi_prime(:, it))) / (norm(Fi(:, it))^3));
+    Fi_bar_prime = (Fi_prime / norm(Fi)) - ((Fi * (Fi' * Fi_prime)) / (norm(Fi)^3));
     
     % calcing fi_bar_prime_prime
-    Fi_bar_prime_prime(:, it) = (Fi_prime_prime(:, it) / norm(Fi(:, it))) - ((2 * Fi_prime(:, it) * (Fi(:, it)' * Fi_prime(:, it)) + Fi(:, it) * (Fi_prime(:, it)' * Fi_prime(:, it)) + Fi(:, it) * (Fi(:, it)' * Fi_prime_prime(:, it))) / norm(Fi(:, it))^3) + ((3 * Fi(:, it) * (Fi(:, it)' * Fi_prime(:, it))) / norm(Fi(:, it))^5);
+    Fi_bar_prime_prime = (Fi_prime_prime / norm(Fi)) - ((2 * Fi_prime * (Fi' * Fi_prime) + Fi * (Fi_prime' * Fi_prime) + Fi * (Fi' * Fi_prime_prime)) / norm(Fi)^3) + ((3 * Fi * (Fi' * Fi_prime)) / norm(Fi)^5);
     
     %the omega desired calc
-    Omega_desired(:, it) = cross(Fi_bar(:, it), Fi_bar_prime(:, it));
+    Omega_desired = cross(Fi_bar, Fi_bar_prime);
     %set the z moment to zero
-    Omega_desired(3, it) = 0;
+    Omega_desired(3) = 0;
     
     %the alpha vector
-    Alpha_desired(:, it) = cross(Fi_bar(:, it), (Fi_bar_prime_prime(:, it) - cross(Omega_desired(:, it), (cross(Omega_desired(:, it), Fi_bar_prime(:, it))))));
+    Alpha_desired = cross(Fi_bar, (Fi_bar_prime_prime - cross(Omega_desired, (cross(Omega_desired, Fi_bar_prime)))));
     %set the z to zero
-    Alpha_desired(3, it) = 0;
+    Alpha_desired(3) = 0;
     
     %FINALLY! now that we have the desired omega and the simulated current
     %omega, we can calcuate the exact forces that each motor must produce at a
     %given time(the maximum accelerations along a polynomial)
-    Mb(:, it) = J * Alpha_desired(:, it) + cross(Omega_desired(:, it), J * Omega_desired(:, it));
-end
-
-motorForces = zeros(4, length(Mb));
-
-torqueMat = [ 1,  1,  1,  1; % matrix that will calculate the
-                0, d, 0,  -d; % moment and motor forces necessary
-                -d,  0, d, 0;
-                -c,  c, -c,  c];
-        
-for it = (1:1:length(foundRoots))
-    motorForces(:, it) = torqueMat \ [norm(f_total(:, it)); Mb(1, it); Mb(2, it); Mb(3, it)];
+    Mb = settings.inertiaTensor * Alpha_desired + cross(Omega_desired, settings.inertiaTensor * Omega_desired);
     
-    % while in the for loop check to see if the forces are within the
-    % bounds
+    motorForces = settings.thrusterMap \ [norm(Fi); Mb];
     
-    if any(motorForces(:, it) <= 1) || any(motorForces(:, it) >= MaxForce / 4)
-        fprintf('INDIVIDUAL MOTOR FORCE TOO HIGH\n');
-        Error = 1;
+    if any(motorForces > settings.maxForcePerMotor)
+        fprintf('THRUSTER FORCE TOO HIGH\n')
+        infeasible = true;
         return;
-    end    
+    end
+    if any(motorForces < settings.minForcePerMotor)
+        fprintf('THRUSTER FORCE TOO LOW\n')
+        infeasible = true;
+        return;
+    end
+    
+    % compute next mass
+    m = m - (norm(Fi) / (settings.Isp * 9.8)) * dt;
+    
+    if m <= 0
+        fprintf('VEHICLE MASS IS NEGATIVE!\n')
+        infeasible = true;
+        return;
+    end
+    
+    % should the trajectory be logged.
+    if nargout == 3
+        trajectorySegmentLog.time(end+1) = times(idx);
+        trajectorySegmentLog.mass(end+1) = m;
+        trajectorySegmentLog.pos(1:3, end+1) = pos(1:3, idx);
+        trajectorySegmentLog.thrust(1:4, end+1) = motorForces;
+        trajectorySegmentLog.tf = tf;
+        
+        % compute quaternion;
+        theta = acos(Fi_bar' * [0;0;1]);
+        q = [cos(theta/2); sin(theta/2) * -cross(Fi_bar, [0;0;1])];
+        %q = q / norm(q);
+        
+        trajectorySegmentLog.quaternion(1:4, end+1) = q;
+    end
+    
 end
 
-%IF YOU HAVE NOT RETURNED BY THIS POINT THE TRAJECTORY IS WITHIN FEASIBLE
-%LIMITS
-fprintf('FEASIBILE\n');
-Error = -1;
-return;
+finalMass = m;
+   
+infeasible = false;
+fprintf('FEASIBLE\n')
 
 end
 
