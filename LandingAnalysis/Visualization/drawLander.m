@@ -1,8 +1,5 @@
-function [] = drawLander(pos, quat, thrust)
+function [] = drawLander(pos, quat, thrust, rad, height)
 %Draws a lander on the current figure.
-
-height = 2;
-rad = 2;
 
 R = quat2rotm(quat');
 

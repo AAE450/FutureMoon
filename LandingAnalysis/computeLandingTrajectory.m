@@ -10,8 +10,9 @@ final = [landingConstraints.trajectoryConstraints(1:3, end), landingConstraints.
 
 warning('off')
 
-[traj, flightTime, segmentLogs] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', landingConstraints, 40);
+[traj, flightTime, segmentLogs] = minimumTimeTrajectoryGenerator(start, mid, final, 'VEL', landingConstraints, 10);
 
-fprintf('\nTotal Flight Time: %f s \nFinal Mass: %f kg\n', flightTime, segmentLogs{end}.mass(end));
+fprintf('\nTotal Flight Time: %f s \nFinal Mass: %f kg\n Propellant Remaining: %f\n', flightTime, segmentLogs{end}.mass(end),...
+    segmentLogs{end}.mass(end) - landingConstraints.payloadMass);
 
 end

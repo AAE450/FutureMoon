@@ -1,26 +1,26 @@
-function [] = analyzeLunarDeploymentDescent(propMass, payloadMass, initialX)
+function [propellantRemaining] = analyzeLunarDeploymentDescent(payloadMass, propMass, initialX)
 %% VEHICLE PARAMETERS
-landingConstraints.payloadMass = 2000;
-landingConstraints.propellantMass = 3000;
+landingConstraints.payloadMass = payloadMass;
+landingConstraints.propellantMass = propMass;
 landingConstraints.maxForcePerMotor = 12000;
 landingConstraints.minForcePerMotor = 0;
 landingConstraints.Isp = 300;
 landingConstraints.g = 1.62;
-landingConstraints.vehicleRadius = 3;
+landingConstraints.vehicleRadius = 4.5;
 landingConstraints.vehicleHeight = 3;
 
 %% TRAJECTORY CONSTRAINTS
                                  
 entrySpeed = 1690;
-exitDelta = [-100;-10;0];
+exitDelta = [-500;-10;0];
 entryAlt = 100000;
 
 % [[pos;vel], [pos;vel]]
 landingConstraints.trajectoryConstraints = [];
 landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
-landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;10; 0;0;0];
-landingConstraints.trajectoryConstraints(1:6, end+1) = [[[0;0;1] + exitDelta]; [0;0;-0.1]];
-landingConstraints.trajectoryConstraints(1:6, end+1) = [exitDelta; [0;0;-0.1]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;21; 0;0;-1];
+%landingConstraints.trajectoryConstraints(1:6, end+1) = [[[0;0;10] + exitDelta]; [0;0;0]];
+%landingConstraints.trajectoryConstraints(1:6, end+1) = [exitDelta; [0;0;-0.1]];
 
 %% DON'T TOUCH
 landingConstraints.thrusterLeverArm = landingConstraints.vehicleRadius;
@@ -50,5 +50,9 @@ landingConstraints.thrusterMap = 2 * [1, 1, 1, 1;
                                       -s, s, -s, s];
                                   
 %% COMPUTE TRAJECTORY
-computeLandingTrajectory(landingConstraints);
+[traj, flightTime, segmentLogs] = computeLandingTrajectory(landingConstraints);
+
+propellantRemaining = segmentLogs{end}.mass(end) - landingConstraints.payloadMass;
+
+generatePlots(segmentLogs, landingConstraints);
 end

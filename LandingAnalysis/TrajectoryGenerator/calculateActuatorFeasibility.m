@@ -6,7 +6,7 @@ trajectorySegmentLog = TrajectorySegmentLog();
 finalMass = 0;
 % Compute the time vector.
 maxDt = 1;
-minResolution = 50;
+minResolution = 10;
 times = (0:maxDt:tf);
 
  if length(times) < minResolution

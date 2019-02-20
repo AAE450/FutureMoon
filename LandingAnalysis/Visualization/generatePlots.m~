@@ -65,7 +65,7 @@ if animate
     % draw the last 300 logs in 3D
     filename = 'testAnimated.gif';
     anim = figure('Name', 'animation', 'Renderer', 'painters', 'Position', [10 10 500 1000])
-    n = 300;
+    n = 1000;
     indices = (length(tArr) - n:length(tArr));
     n = 1;
     for idx = indices
@@ -73,10 +73,10 @@ if animate
         title('Landing Animation');
         view(63, 28);
         daspect([1, 1, 1])
-        windowRad = 200;
+        windowRad = 50;
         xlim([-windowRad, windowRad] + posArr(1, idx));
         ylim([-windowRad, windowRad] + posArr(2, idx));
-        zlim([max(-windowRad, -20), windowRad] + posArr(3, idx));
+        zlim([min(-windowRad), windowRad] + posArr(3, idx));
         hold on
         plot3(posArr(1, indices), posArr(2, indices), posArr(3, indices), 'b--');
         
@@ -85,7 +85,7 @@ if animate
         ylabel('y (m)');
         zlabel('z (m)');
         grid on
-        text(posArr(1, idx) + 10, posArr(2, idx), posArr(3, idx), sprintf('Time: %f', tArr(idx)));
+        text(posArr(1, idx) + 10, posArr(3, idx), sprintf('Time: %f', tArr(idx)));
         
         
         drawnow
