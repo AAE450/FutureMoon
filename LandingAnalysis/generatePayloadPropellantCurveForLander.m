@@ -44,4 +44,7 @@ for idx = (1:length(payloads))
     
 end
 
-scatter(payloads(1:length(propReq)), propReq);
+scatter(1e-3 * payloads(1:length(propReq)), 1e-3 * propReq);
+title('Propellant Required To Land');
+xlabel('Inert + Payload (Mg)')
+ylabel('Propellant (Mg)')

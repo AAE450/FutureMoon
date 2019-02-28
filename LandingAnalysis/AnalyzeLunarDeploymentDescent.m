@@ -2,9 +2,9 @@ function [propellantRemaining] = analyzeLunarDeploymentDescent(payloadMass, prop
 %% VEHICLE PARAMETERS
 landingConstraints.payloadMass = payloadMass;
 landingConstraints.propellantMass = propMass;
-landingConstraints.maxForcePerMotor = 12000;
+landingConstraints.maxForcePerMotor = 2*12000;
 landingConstraints.minForcePerMotor = 0;
-landingConstraints.Isp = 300;
+landingConstraints.Isp = 470;
 landingConstraints.g = 1.62;
 landingConstraints.vehicleRadius = 4.5;
 landingConstraints.vehicleHeight = 3;
@@ -19,8 +19,9 @@ entryAlt = 100000;
 landingConstraints.trajectoryConstraints = [];
 landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
 landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;21; 0;0;-1];
-%landingConstraints.trajectoryConstraints(1:6, end+1) = [[[0;0;10] + exitDelta]; [0;0;0]];
-%landingConstraints.trajectoryConstraints(1:6, end+1) = [exitDelta; [0;0;-0.1]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000-38000;0;21]; [0;0;0]];
 
 %% DON'T TOUCH
 landingConstraints.thrusterLeverArm = landingConstraints.vehicleRadius;

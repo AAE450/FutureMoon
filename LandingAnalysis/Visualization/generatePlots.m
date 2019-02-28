@@ -73,7 +73,7 @@ if animate
         title('Landing Animation');
         view(63, 28);
         daspect([1, 1, 1])
-        windowRad = 200;
+        windowRad = 10000;
         xlim([-windowRad, windowRad] + posArr(1, idx));
         ylim([-windowRad, windowRad] + posArr(2, idx));
         zlim([max(-windowRad, -20), windowRad] + posArr(3, idx));
