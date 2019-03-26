@@ -44,7 +44,7 @@ title('Position during landing')
 xlabel('x (m)');
 ylabel('z (m)');
 xlim([-200, 50])
-ylim([0, 150])
+ylim([-20, 150])
 daspect([1, 1, 1])
 
 

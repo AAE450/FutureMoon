@@ -1,0 +1,239 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>analyzeLunarDeploymentDescent</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-03-06"><meta name="DC.source" content="analyzeLunarDeploymentDescent.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">VEHICLE PARAMETERS</a></li><li><a href="#3">TRAJECTORY CONSTRAINTS</a></li><li><a href="#4">DON'T TOUCH</a></li><li><a href="#5">COMPUTE TRAJECTORY</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> [propellantRemaining] = analyzeLunarDeploymentDescent(payloadMass, propMass, initialX)
+</pre><h2 id="2">VEHICLE PARAMETERS</h2><pre class="codeinput">landingConstraints.payloadMass = payloadMass;
+landingConstraints.propellantMass = propMass;
+landingConstraints.maxForcePerMotor = 2*12000;
+landingConstraints.minForcePerMotor = 0;
+landingConstraints.Isp = 470;
+landingConstraints.g = 1.62;
+landingConstraints.vehicleRadius = 4.5;
+landingConstraints.vehicleHeight = 3;
+</pre><h2 id="3">TRAJECTORY CONSTRAINTS</h2><pre class="codeinput">entrySpeed = 1690;
+exitDelta = [-500;-10;0];
+entryAlt = 100000;
+
+<span class="comment">% [[pos;vel], [pos;vel]]</span>
+landingConstraints.trajectoryConstraints = [];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;21; 0;0;-1];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000-38000;0;21]; [0;0;0]];
+</pre><h2 id="4">DON'T TOUCH</h2><pre class="codeinput">landingConstraints.thrusterLeverArm = landingConstraints.vehicleRadius;
+
+R = landingConstraints.vehicleRadius;
+H = landingConstraints.vehicleHeight;
+
+mass = landingConstraints.payloadMass + landingConstraints.propellantMass/2;
+Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
+Iyy = Ixx;
+Izz = 1/2*mass*R^2;
+
+landingConstraints.inertiaTensor = diag([Ixx, Iyy, Izz]);
+
+landingConstraints.initialMass = landingConstraints.payloadMass + landingConstraints.propellantMass;
+
+
+thrusterTheta = 5 * pi/180; <span class="comment">% rad (the split between the thrusters)</span>
+landingConstraints.thrusterCount = 8/2; <span class="comment">% this is because of an equality constrain imposed.</span>
+
+c = cos(thrusterTheta/2);
+s = sin(thrusterTheta/2);
+
+landingConstraints.thrusterMap = 2 * [1, 1, 1, 1;
+                                      0, c, 0, -c;
+                                      -c, 0, c, 0;
+                                      -s, s, -s, s];
+</pre><h2 id="5">COMPUTE TRAJECTORY</h2><pre class="codeinput">[traj, flightTime, segmentLogs] = computeLandingTrajectory(landingConstraints);
+
+propellantRemaining = segmentLogs{end}.mass(end) - landingConstraints.payloadMass;
+
+generatePlots(segmentLogs, landingConstraints);
+</pre><pre class="codeoutput">FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FEASIBLE
+INVERTED FLIGHT NOT ALLOWED.
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 759.765625
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO HIGH
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 167.968750
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO HIGH
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 179.687500
+FEASIBLE
+FEASIBLE
+FEASIBLE
+THRUSTER FORCE TOO LOW
+FEASIBLE
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+THRUSTER FORCE TOO LOW
+FEASIBLE
+FEASIBLE
+FEASIBLE
+FOUND FEASSIBLE TRAJECTORY SEGMENT WITH TF: 181.640625
+
+Total Flight Time: 1289.062500 s 
+Final Mass: 5730.142756 kg
+ Propellant Remaining: 430.142756
+</pre><img vspace="5" hspace="5" src="analyzeLunarDeploymentDescent_01.png" alt=""> <img vspace="5" hspace="5" src="analyzeLunarDeploymentDescent_02.png" alt=""> <img vspace="5" hspace="5" src="analyzeLunarDeploymentDescent_03.png" alt=""> <pre class="codeinput"><span class="keyword">end</span>
+</pre><pre class="codeoutput">
+ans =
+
+     4.301427562580229e+02
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [propellantRemaining] = analyzeLunarDeploymentDescent(payloadMass, propMass, initialX)
+%% VEHICLE PARAMETERS
+landingConstraints.payloadMass = payloadMass;
+landingConstraints.propellantMass = propMass;
+landingConstraints.maxForcePerMotor = 2*12000;
+landingConstraints.minForcePerMotor = 0;
+landingConstraints.Isp = 470;
+landingConstraints.g = 1.62;
+landingConstraints.vehicleRadius = 4.5;
+landingConstraints.vehicleHeight = 3;
+
+%% TRAJECTORY CONSTRAINTS
+                                 
+entrySpeed = 1690;
+exitDelta = [-500;-10;0];
+entryAlt = 100000;
+
+% [[pos;vel], [pos;vel]]
+landingConstraints.trajectoryConstraints = [];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;21; 0;0;-1];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000-38000;0;21]; [0;0;0]];
+
+%% DON'T TOUCH
+landingConstraints.thrusterLeverArm = landingConstraints.vehicleRadius;
+
+R = landingConstraints.vehicleRadius;
+H = landingConstraints.vehicleHeight;
+
+mass = landingConstraints.payloadMass + landingConstraints.propellantMass/2;
+Ixx = 1/4 * mass * R^2 + 1/12*mass*H^2;
+Iyy = Ixx;
+Izz = 1/2*mass*R^2;
+
+landingConstraints.inertiaTensor = diag([Ixx, Iyy, Izz]);
+
+landingConstraints.initialMass = landingConstraints.payloadMass + landingConstraints.propellantMass;
+
+
+thrusterTheta = 5 * pi/180; % rad (the split between the thrusters)
+landingConstraints.thrusterCount = 8/2; % this is because of an equality constrain imposed.
+
+c = cos(thrusterTheta/2);
+s = sin(thrusterTheta/2);
+
+landingConstraints.thrusterMap = 2 * [1, 1, 1, 1;
+                                      0, c, 0, -c;
+                                      -c, 0, c, 0;
+                                      -s, s, -s, s];
+                                  
+%% COMPUTE TRAJECTORY
+[traj, flightTime, segmentLogs] = computeLandingTrajectory(landingConstraints);
+
+propellantRemaining = segmentLogs{end}.mass(end) - landingConstraints.payloadMass;
+
+generatePlots(segmentLogs, landingConstraints);
+end
+##### SOURCE END #####
+--></body></html>

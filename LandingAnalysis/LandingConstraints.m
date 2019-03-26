@@ -13,11 +13,11 @@ classdef LandingConstraints
         maxForcePerMotor; % N
         minForcePerMotor; % N
         
-        initialMass; %kg
+        initialMass; % kg
         Isp;
         inertiaTensor; % 3x3 inertia tensor
         
-        thrusterLeverArm = 2; % meters (the distant from the com to each thruster)
+        thrusterLeverArm = 4; % meters (the distant from the com to each thruster)
         thrusterCount = 8;
         thrusterMap; % used to map moments and total body z force to individual thruster outputs.
         

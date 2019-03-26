@@ -17,9 +17,10 @@ entryAlt = 100000;
 
 % [[pos;vel], [pos;vel]]
 landingConstraints.trajectoryConstraints = [];
-landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
 landingConstraints.trajectoryConstraints(1:6, end+1) = [0;0;21; 0;0;0];
-%landingConstraints.trajectoryConstraints(1:6, end+1) = [[-41000;0;21]; [0;0;0]];
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[initialX;0;entryAlt]; [entrySpeed;0;0]];
+
+landingConstraints.trajectoryConstraints(1:6, end+1) = [[-1000;0;21]; [0;0;0]];
 %landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000;0;21]; [0;0;0]];
 %landingConstraints.trajectoryConstraints(1:6, end+1) = [[-38000-41000-38000;0;21]; [0;0;0]];
 
