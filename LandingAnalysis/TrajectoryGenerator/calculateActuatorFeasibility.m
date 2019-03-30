@@ -1,6 +1,10 @@
 function [infeasible, finalMass, trajectorySegmentLog] = calculateActuatorFeasibility(Coefficients, settings, tf)
-% computes the forces on each motor over time and computes propellant
-% consumption.
+% This function will determine if actuator constraints are violated for an
+% arbitrary trajectory. For example if a moment required forces a thruster
+% to produce a negative value, the trajectory is infeasible.
+% Additionally, this function checks if the spacecraft will be in inverted
+% flight at any point during the trajectory.
+% The math behind this function is derived in the appendices.
 
 trajectorySegmentLog = TrajectorySegmentLog();
 finalMass = 0;

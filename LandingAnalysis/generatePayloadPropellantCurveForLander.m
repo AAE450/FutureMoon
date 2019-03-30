@@ -1,6 +1,12 @@
-% This function will the propellant required for descent, lower, and
+% This script will compute the propellant required for descent, lower, and
 % landing manuever. It is using a binary search to find the minimum
 % acceptable propellant to land a given payload.
+
+% The figure produced my this script can be used by the team to determine
+% the propellant required to land an arbitrary payload.
+
+% Most importantly, it finds the limit on the payload capacity allowed by
+% the thrusters.
 
 payloads = (1000:1000:30000);
 

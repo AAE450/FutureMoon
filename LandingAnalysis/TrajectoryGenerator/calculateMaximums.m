@@ -1,5 +1,4 @@
 function [ maximums, foundRoots ] = calculateMaximums( startCoefficients, derivative, tf)
-%UNTITLED5 Summary of this function goes here
 %   this function uses a 3X10 coefficient matrix and a derivative count to
 %   calculate the maximums of a given set of functions at a given
 %   derivative

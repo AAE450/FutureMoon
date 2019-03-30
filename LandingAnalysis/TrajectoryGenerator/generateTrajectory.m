@@ -1,3 +1,5 @@
+% Example script used to test the trajectory generator.
+
 start = [0, 0, 0, 0, 0;0, 0, 0, 0, 0;2, 0, 0, 0, 0];
 mid = [-5; -3;2.5;0; -5; 2.5; 10; 0; 2.5; 5; 5; 2.5];
 final = [10, 0, 0, 0, 0;10, 0, 0, 0, 0; 2, 0, 0, 0, 0]

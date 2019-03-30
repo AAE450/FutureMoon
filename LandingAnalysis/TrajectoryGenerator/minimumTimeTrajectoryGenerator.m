@@ -1,6 +1,6 @@
 function [ Trajectory, totalFlightTime, segmentLogs] = minimumTimeTrajectoryGenerator( start, mid, final, MIDPOINT_MODE, settings, ITERATIONS)
 %UNTITLED7 Summary of this function goes here
-%   This will generate a trajectory that is fly-able by a quadrotor it may
+%   This will generate a trajectory that is fly-able by the spacecraft it may
 %   take a second.
 %   The format for start and end is [x_0, x_1, x_2, x_3, x_4]
 %                                   [y_0, y_1, y_2, y_3, y_4]

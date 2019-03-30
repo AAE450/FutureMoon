@@ -1,8 +1,10 @@
 function [C, finalMass, trajectorySegmentLog] = polynomialTrajectorySolver(X, Y, Z, settings, ITERATIONS)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-%   This will solve for the coefficients of a constrained 9 order
+%   This will solve for the coefficients of a constrained 9th order
 %   polynomial
+% Essentially, this will compute a feasible trajectory by finding the
+% lowest possible flight time such that a set of actuator constraints on
+% the vehicle are satisfied.
+%
 % END_POINT_MODES: 'FULL', 'VEL', 'NOVEL'
 % for vel and no vel use zeros in their place
 %the number of iterations

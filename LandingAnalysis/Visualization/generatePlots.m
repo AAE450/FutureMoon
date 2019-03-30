@@ -1,4 +1,7 @@
 function [] = generatePlots(segmentLogs, landingConstraints)
+% This function will produce a series of plots from the trajectory
+% generated along with an optional landing animation.
+
 posArr  = [];
 thrustArr = [];
 tArr = [];

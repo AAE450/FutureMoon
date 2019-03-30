@@ -1,6 +1,4 @@
 classdef LandingConstraints
-    %LANDINGCONSTRAINTS Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties
         payloadMass; % 1x1 (kg)
@@ -14,7 +12,7 @@ classdef LandingConstraints
         minForcePerMotor; % N
         
         initialMass; % kg
-        Isp;
+        Isp; % the Isp of each thruster (s)
         inertiaTensor; % 3x3 inertia tensor
         
         thrusterLeverArm = 4; % meters (the distant from the com to each thruster)

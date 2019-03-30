@@ -1,6 +1,6 @@
 function [ p1, p2 ] = trajectoryPlotter( Traj )
-%UNTITLED Summary of this function goes here
-%   plots the trajectory
+%This function is used when drawing the trajectory in figures. It simply
+%evaluates the polynomials along the trajectory.
 
 [trajRow, trajCol, trajZ] = size(Traj);
 
